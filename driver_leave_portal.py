@@ -6,6 +6,7 @@ from database import (
     get_driver_leave_summary,
     get_driver_leave_history,
     apply_driver_leave,
+    get_driver_profile,
 )
 
 
@@ -29,7 +30,7 @@ def driver_leave_portal_page():
 def _render_login():
     st.subheader("🔐 Driver Login")
     with st.form("driver_login_form"):
-        username = st.text_input("Username")
+        username = st.text_input("Phone Number")
         password = st.text_input("Password", type="password")
         login_submit = st.form_submit_button("Login")
 
@@ -49,10 +50,16 @@ def _render_driver_dashboard():
     today = date.today()
     driver_id = st.session_state.leave_driver_id
     username = st.session_state.leave_username
+    profile = get_driver_profile(driver_id)
 
     top_col1, top_col2 = st.columns([4, 1])
     with top_col1:
-        st.caption(f"Logged in as `{username}` ({driver_id})")
+        if profile:
+            st.caption(
+                f"Logged in as `{profile['name']}` ({driver_id}) • Phone: `{profile['phone_number']}` • Joined: `{profile['date_of_joining']}`"
+            )
+        else:
+            st.caption(f"Logged in as `{username}` ({driver_id})")
     with top_col2:
         if st.button("Logout"):
             st.session_state.leave_logged_in = False
@@ -80,15 +87,12 @@ def _render_driver_dashboard():
         apply_submit = st.form_submit_button("Apply Leave")
 
     if apply_submit:
-        if leave_date.year != today.year or leave_date.month != today.month:
-            st.error("You can apply leave only for the current month.")
+        success, message = apply_driver_leave(driver_id, leave_date, reason)
+        if success:
+            st.success(message)
+            st.rerun()
         else:
-            success, message = apply_driver_leave(driver_id, leave_date, reason)
-            if success:
-                st.success(message)
-                st.rerun()
-            else:
-                st.error(message)
+            st.error(message)
 
     st.subheader("📜 Leave History")
     history_df = get_driver_leave_history(driver_id)
