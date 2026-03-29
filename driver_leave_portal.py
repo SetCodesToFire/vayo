@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import date
 
+import branding
 from database import (
     get_driver_leave_summary,
     get_driver_leave_history,
@@ -10,7 +11,7 @@ from database import (
 
 
 def driver_leave_portal_page(driver_id=None):
-    st.header("🗓️ Driver Leave Portal")
+    branding.render_page_header("🗓️ Driver Leave Portal")
     if not driver_id:
         st.error("Driver session not found. Please log in again.")
         return
