@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 from database import get_dataframe
+import branding
 
 def driver_dashboard_page():
 
-    st.header("👨‍✈️ Driver Analytics")
+    branding.render_page_header("👨‍✈️ Driver Analytics")
 
     df = get_dataframe()
 
