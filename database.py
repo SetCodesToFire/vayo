@@ -1,27 +1,44 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 
-DB_NAME = "vayo.db"
+# -------------------------------
+# DB CONFIG (Replace with Supabase credentials)
+# -------------------------------
+DB_CONFIG = {
+    "host": "db.lypebrexlzjzyetkkkfp.supabase.co",
+    "database": "postgres",
+    "user": "postgres",
+    "password": "Vayocab123@",
+    "port": "5432"
+}
+
+
+# -------------------------------
+# CONNECTION HELPER
+# -------------------------------
+def get_connection():
+    return psycopg2.connect(**DB_CONFIG)
+
 
 # -------------------------------
 # INIT DB
 # -------------------------------
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS payouts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         driver TEXT,
-        date TEXT,
-        fare REAL,
-        subscription REAL,
-        cash REAL,
-        tip REAL,
-        net_payout REAL,
-        driver_gross REAL,
-        cng REAL
+        date DATE,
+        fare FLOAT,
+        subscription FLOAT,
+        cash FLOAT,
+        tip FLOAT,
+        net_payout FLOAT,
+        driver_gross FLOAT,
+        cng FLOAT
     )
     """)
 
@@ -33,16 +50,16 @@ def init_db():
 # INSERT SINGLE ROW
 # -------------------------------
 def insert_payout(row, date, cng):
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
     INSERT INTO payouts 
     (driver, date, fare, subscription, cash, tip, net_payout, driver_gross, cng)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (
         row['Driver'],
-        str(date),
+        date,
         float(row['Fare']),
         float(row['Subscription']),
         float(row['Cash_Collected']),
@@ -57,19 +74,42 @@ def insert_payout(row, date, cng):
 
 
 # -------------------------------
-# BULK SAVE
+# BULK SAVE (Optimized)
 # -------------------------------
 def save_to_db(df, date, cng):
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    for _, row in df.iterrows():
-        insert_payout(row, date, cng)
+    data = [
+        (
+            row['Driver'],
+            date,
+            float(row['Fare']),
+            float(row['Subscription']),
+            float(row['Cash_Collected']),
+            float(row['Tip']),
+            float(row['Net_Payout']),
+            float(row['Driver_Gross']),
+            float(cng)
+        )
+        for _, row in df.iterrows()
+    ]
+
+    cursor.executemany("""
+    INSERT INTO payouts 
+    (driver, date, fare, subscription, cash, tip, net_payout, driver_gross, cng)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, data)
+
+    conn.commit()
+    conn.close()
 
 
 # -------------------------------
 # GET DATA
 # -------------------------------
 def get_dataframe():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     try:
         df = pd.read_sql("SELECT * FROM payouts", conn)
