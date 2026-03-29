@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 from processor import process_file
 from database import save_to_db
+import branding
 
 def driver_payout_page():
 
-    st.header("💰 Driver Payout System")
+    branding.render_page_header("💰 Driver Payout System")
 
     # -------------------------------
     # SESSION STATE
