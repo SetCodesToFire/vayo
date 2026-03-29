@@ -5,9 +5,9 @@ import pandas as pd
 # DB CONFIG (Replace with Supabase credentials)
 # -------------------------------
 DB_CONFIG = {
-    "host": "db.lypebrexlzjzyetkkkfp.supabase.co",
+    "host": "aws-1-ap-northeast-1.pooler.supabase.com",
     "database": "postgres",
-    "user": "postgres",
+    "user": "postgres.lypebrexlzjzyetkkkfp",
     "password": "Vayocab123@",
     "port": "5432"
 }
