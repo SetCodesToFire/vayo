@@ -18,6 +18,8 @@ if "auth_role" not in st.session_state:
     st.session_state.auth_role = None
 if "auth_driver_id" not in st.session_state:
     st.session_state.auth_driver_id = None
+if "show_signup" not in st.session_state:
+    st.session_state.show_signup = False
 
 st.title("🚖 Vayo Cab Management System")
 
@@ -25,29 +27,40 @@ st.title("🚖 Vayo Cab Management System")
 # SINGLE LOGIN GATE
 # -------------------------------
 if not st.session_state.auth_logged_in:
-    st.subheader("🔐 Login")
-    with st.form("global_login_form"):
-        username = st.text_input("Username / Phone Number")
-        password = st.text_input("Password", type="password")
-        login_submit = st.form_submit_button("Login")
-
-    if login_submit:
-        if authenticate_super_user(username.strip(), password):
-            st.session_state.auth_logged_in = True
-            st.session_state.auth_role = "admin"
-            st.session_state.auth_driver_id = None
-            st.success("Logged in as super user.")
+    if st.session_state.show_signup:
+        st.subheader("🆕 Driver Signup")
+        driver_onboarding_page()
+        if st.button("← Back to Login", key="back_to_login_btn"):
+            st.session_state.show_signup = False
             st.rerun()
-        else:
-            driver_id = authenticate_driver(username.strip(), password)
-            if driver_id:
+    else:
+        st.subheader("🔐 Login")
+        with st.form("global_login_form"):
+            username = st.text_input("Username / Phone Number")
+            password = st.text_input("Password", type="password")
+            login_submit = st.form_submit_button("Login")
+
+        if login_submit:
+            if authenticate_super_user(username.strip(), password):
                 st.session_state.auth_logged_in = True
-                st.session_state.auth_role = "driver"
-                st.session_state.auth_driver_id = driver_id
-                st.success("Logged in as driver.")
+                st.session_state.auth_role = "admin"
+                st.session_state.auth_driver_id = None
+                st.success("Logged in as super user.")
                 st.rerun()
             else:
-                st.error("Invalid credentials.")
+                driver_id = authenticate_driver(username.strip(), password)
+                if driver_id:
+                    st.session_state.auth_logged_in = True
+                    st.session_state.auth_role = "driver"
+                    st.session_state.auth_driver_id = driver_id
+                    st.success("Logged in as driver.")
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials.")
+
+        if st.button("Sign up as new driver", key="signup_btn"):
+            st.session_state.show_signup = True
+            st.rerun()
     st.stop()
 
 # -------------------------------
