@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 from database import get_dataframe
+import branding
 
 def owner_dashboard_page():
 
-    st.header("📊 Business Dashboard")
+    branding.render_page_header("📊 Business Dashboard")
 
     df = get_dataframe()
 
