@@ -5,71 +5,90 @@ from owner_dashboard import owner_dashboard_page
 from driver_dashboard import driver_dashboard_page
 from driver_leave_portal import driver_leave_portal_page
 from driver_onboarding import driver_onboarding_page
-from database import init_db, authenticate_super_user
+from database import init_db, authenticate_super_user, authenticate_driver, get_driver_profile
 
 st.set_page_config(page_title="Vayo Dashboard", layout="wide")
 
 # Initialize DB
 init_db()
 
-if "super_user_logged_in" not in st.session_state:
-    st.session_state.super_user_logged_in = False
-
-ADMIN_PAGES = {
-    "💰 Driver Payout",
-    "📊 Business Dashboard",
-    "👨‍✈️ Driver Analytics",
-}
-DRIVER_PAGES = ["🆕 Driver Onboarding", "🗓️ Driver Leave Portal"]
-ADMIN_PAGES_ORDER = ["💰 Driver Payout", "📊 Business Dashboard", "👨‍✈️ Driver Analytics"]
+if "auth_logged_in" not in st.session_state:
+    st.session_state.auth_logged_in = False
+if "auth_role" not in st.session_state:
+    st.session_state.auth_role = None
+if "auth_driver_id" not in st.session_state:
+    st.session_state.auth_driver_id = None
 
 st.title("🚖 Vayo Cab Management System")
 
 # -------------------------------
-# SIDEBAR: super user login + navigation
+# SINGLE LOGIN GATE
 # -------------------------------
-with st.sidebar:
-    st.subheader("Navigation")
+if not st.session_state.auth_logged_in:
+    st.subheader("🔐 Login")
+    with st.form("global_login_form"):
+        username = st.text_input("Username / Phone Number")
+        password = st.text_input("Password", type="password")
+        login_submit = st.form_submit_button("Login")
 
-    if st.session_state.super_user_logged_in:
-        st.success("Signed in as super user")
-        if st.button("Admin logout", key="super_logout"):
-            st.session_state.super_user_logged_in = False
-            if st.session_state.get("nav_page") in ADMIN_PAGES:
-                st.session_state.nav_page = DRIVER_PAGES[0]
+    if login_submit:
+        if authenticate_super_user(username.strip(), password):
+            st.session_state.auth_logged_in = True
+            st.session_state.auth_role = "admin"
+            st.session_state.auth_driver_id = None
+            st.success("Logged in as super user.")
             st.rerun()
-    else:
-        with st.expander("🔐 Super user (admin) login", expanded=False):
-            st.caption("Required for Driver Payout, Business Dashboard, and Driver Analytics.")
-            su_user = st.text_input("Username", key="super_username")
-            su_pass = st.text_input("Password", type="password", key="super_password")
-            if st.button("Log in as super user", key="super_login_btn"):
-                if authenticate_super_user(su_user, su_pass):
-                    st.session_state.super_user_logged_in = True
-                    st.rerun()
-                else:
-                    st.error("Invalid super user credentials.")
+        else:
+            driver_id = authenticate_driver(username.strip(), password)
+            if driver_id:
+                st.session_state.auth_logged_in = True
+                st.session_state.auth_role = "driver"
+                st.session_state.auth_driver_id = driver_id
+                st.success("Logged in as driver.")
+                st.rerun()
+            else:
+                st.error("Invalid credentials.")
+    st.stop()
 
-    if st.session_state.super_user_logged_in:
-        nav_options = ADMIN_PAGES_ORDER + DRIVER_PAGES
-    else:
-        nav_options = DRIVER_PAGES
+# -------------------------------
+# ROLE-BASED NAVIGATION
+# -------------------------------
+if st.session_state.auth_role == "admin":
+    nav_options = [
+        "💰 Driver Payout",
+        "📊 Business Dashboard",
+        "👨‍✈️ Driver Analytics",
+        "🆕 Driver Onboarding",
+    ]
+    role_label = "Super User"
+else:
+    nav_options = ["🗓️ Driver Leave Portal"]
+    role_label = "Driver"
+
+with st.sidebar:
+    st.success(f"Logged in as {role_label}")
+    if st.session_state.auth_role == "driver":
+        profile = get_driver_profile(st.session_state.auth_driver_id)
+        if profile:
+            st.caption(f"{profile['name']} ({profile['driver_id']})")
+    if st.button("Logout", key="global_logout"):
+        st.session_state.auth_logged_in = False
+        st.session_state.auth_role = None
+        st.session_state.auth_driver_id = None
+        if "nav_page" in st.session_state:
+            del st.session_state["nav_page"]
+        st.rerun()
 
     if "nav_page" not in st.session_state or st.session_state.nav_page not in nav_options:
         st.session_state.nav_page = nav_options[0]
 
-    page = st.radio(
-        "Go to",
-        nav_options,
-        key="nav_page",
-        label_visibility="collapsed",
-    )
+    page = st.radio("Navigation", nav_options, key="nav_page")
 
 # -------------------------------
 # ACCESS CONTROL (defense in depth)
 # -------------------------------
-if page in ADMIN_PAGES and not st.session_state.super_user_logged_in:
-    st.error("Access denied. These pages are only available to super users. Use **Super user login** in the sidebar.")
+if st.session_state.auth_role != "admin" and page != "🗓️ Driver Leave Portal":
+    st.error("Access denied.")
     st.stop()
 
 # -------------------------------
@@ -84,4 +103,4 @@ elif page == "👨‍✈️ Driver Analytics":
 elif page == "🆕 Driver Onboarding":
     driver_onboarding_page()
 else:
-    driver_leave_portal_page()
+    driver_leave_portal_page(driver_id=st.session_state.auth_driver_id)
