@@ -2,10 +2,11 @@ import re
 import streamlit as st
 
 from database import onboard_driver
+import branding
 
 
 def driver_onboarding_page():
-    st.header("🆕 Driver Onboarding")
+    branding.render_page_header("🆕 Driver Onboarding")
 
     with st.form("driver_onboarding_form"):
         c1, c2 = st.columns(2)
