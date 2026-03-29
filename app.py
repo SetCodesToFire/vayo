@@ -7,8 +7,9 @@ from driver_leave_portal import driver_leave_portal_page
 from driver_onboarding import driver_onboarding_page
 from admin_leave_dashboard import admin_leave_dashboard_page
 from database import init_db, authenticate_super_user, authenticate_driver, get_driver_profile
+import branding
 
-st.set_page_config(page_title="Vayo Dashboard", layout="wide")
+st.set_page_config(page_title="Vayo Cab Service", layout="wide")
 
 # Initialize DB
 init_db()
@@ -22,12 +23,14 @@ if "auth_driver_id" not in st.session_state:
 if "show_signup" not in st.session_state:
     st.session_state.show_signup = False
 
-st.title("🚖 Vayo Cab Management System")
+branding.render_app_header("Management System")
 
 # -------------------------------
 # SINGLE LOGIN GATE
 # -------------------------------
 if not st.session_state.auth_logged_in:
+    with st.sidebar:
+        branding.render_sidebar_logo()
     if st.session_state.show_signup:
         st.subheader("🆕 Driver Signup")
         driver_onboarding_page()
@@ -81,6 +84,7 @@ else:
     role_label = "Driver"
 
 with st.sidebar:
+    branding.render_sidebar_logo()
     st.success(f"Logged in as {role_label}")
     if st.session_state.auth_role == "driver":
         profile = get_driver_profile(st.session_state.auth_driver_id)
