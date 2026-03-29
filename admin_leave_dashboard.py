@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
+import branding
 from database import get_connection
 
 
@@ -94,7 +95,7 @@ def _fallback_admin_leave_dashboard_data(year, month=None):
 
 
 def admin_leave_dashboard_page():
-    st.header("📋 Central Driver Leave Dashboard")
+    branding.render_page_header("📋 Central Driver Leave Dashboard")
 
     today = date.today()
     col1, col2 = st.columns(2)
