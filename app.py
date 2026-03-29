@@ -16,7 +16,7 @@ st.title("🚖 Vayo Cab Management System")
 # -------------------------------
 # TOP NAVIGATION
 # -------------------------------
-tab1, tab2, tab3, tabs4 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "💰 Driver Payout",
     "📊 Business Dashboard",
     "👨‍✈️ Driver Analytics",
@@ -32,6 +32,6 @@ with tab2:
 
 with tab3:
     driver_dashboard_page()
-    
+
 with tab4:
     driver_leave_portal_page()
