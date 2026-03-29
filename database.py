@@ -518,3 +518,98 @@ def apply_driver_leave(driver_id, leave_date, reason):
     conn.commit()
     conn.close()
     return True, "Leave applied successfully."
+
+
+def get_admin_leave_dashboard_data(year, month=None):
+    conn = get_connection()
+
+    driver_df = pd.read_sql(
+        """
+        SELECT driver_id, first_name, last_name, phone_number, date_of_joining
+        FROM drivers
+        ORDER BY driver_id
+        """,
+        conn,
+    )
+
+    leave_query = """
+        SELECT driver_id, date, reason, month, year, leave_taken
+        FROM driver_leaves
+        WHERE year = %s
+    """
+    params = [year]
+    if month:
+        leave_query += " AND month = %s"
+        params.append(month)
+    leave_query += " ORDER BY date DESC"
+
+    leave_df = pd.read_sql(leave_query, conn, params=tuple(params))
+    conn.close()
+
+    if driver_df.empty:
+        return {
+            "driver_count": 0,
+            "leave_count": 0,
+            "avg_leaves_per_driver": 0.0,
+            "driver_summary": pd.DataFrame(),
+            "leave_history": pd.DataFrame(),
+        }
+
+    if leave_df.empty:
+        driver_summary = driver_df.copy()
+        driver_summary["driver_name"] = (
+            driver_summary["first_name"].fillna("") + " " + driver_summary["last_name"].fillna("")
+        ).str.strip()
+        driver_summary["leaves_taken"] = 0
+        driver_summary["last_leave_date"] = pd.NaT
+        driver_summary = driver_summary[
+            ["driver_id", "driver_name", "phone_number", "date_of_joining", "leaves_taken", "last_leave_date"]
+        ]
+        return {
+            "driver_count": int(len(driver_summary)),
+            "leave_count": 0,
+            "avg_leaves_per_driver": 0.0,
+            "driver_summary": driver_summary,
+            "leave_history": pd.DataFrame(),
+        }
+
+    leave_df["date"] = pd.to_datetime(leave_df["date"], errors="coerce")
+
+    leave_counts = (
+        leave_df.groupby("driver_id")
+        .agg(leaves_taken=("leave_taken", "sum"), last_leave_date=("date", "max"))
+        .reset_index()
+    )
+
+    driver_summary = driver_df.merge(leave_counts, on="driver_id", how="left")
+    driver_summary["driver_name"] = (
+        driver_summary["first_name"].fillna("") + " " + driver_summary["last_name"].fillna("")
+    ).str.strip()
+    driver_summary["leaves_taken"] = driver_summary["leaves_taken"].fillna(0).astype(int)
+    driver_summary = driver_summary[
+        ["driver_id", "driver_name", "phone_number", "date_of_joining", "leaves_taken", "last_leave_date"]
+    ].sort_values(["leaves_taken", "driver_name"], ascending=[False, True])
+
+    leave_history = leave_df.merge(
+        driver_df[["driver_id", "first_name", "last_name"]],
+        on="driver_id",
+        how="left",
+    )
+    leave_history["driver_name"] = (
+        leave_history["first_name"].fillna("") + " " + leave_history["last_name"].fillna("")
+    ).str.strip()
+    leave_history = leave_history[
+        ["driver_id", "driver_name", "date", "reason", "month", "year"]
+    ].sort_values("date", ascending=False)
+
+    total_drivers = int(len(driver_summary))
+    total_leaves = int(driver_summary["leaves_taken"].sum())
+    avg_leaves = round(total_leaves / total_drivers, 2) if total_drivers else 0.0
+
+    return {
+        "driver_count": total_drivers,
+        "leave_count": total_leaves,
+        "avg_leaves_per_driver": avg_leaves,
+        "driver_summary": driver_summary,
+        "leave_history": leave_history,
+    }
