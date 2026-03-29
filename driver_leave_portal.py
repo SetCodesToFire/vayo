@@ -2,7 +2,6 @@ import streamlit as st
 from datetime import date
 
 from database import (
-    authenticate_driver,
     get_driver_leave_summary,
     get_driver_leave_history,
     apply_driver_leave,
@@ -10,46 +9,16 @@ from database import (
 )
 
 
-def driver_leave_portal_page():
+def driver_leave_portal_page(driver_id=None):
     st.header("🗓️ Driver Leave Portal")
-
-    if "leave_logged_in" not in st.session_state:
-        st.session_state.leave_logged_in = False
-    if "leave_driver_id" not in st.session_state:
-        st.session_state.leave_driver_id = None
-    if "leave_username" not in st.session_state:
-        st.session_state.leave_username = None
-
-    if not st.session_state.leave_logged_in:
-        _render_login()
+    if not driver_id:
+        st.error("Driver session not found. Please log in again.")
         return
-
-    _render_driver_dashboard()
-
-
-def _render_login():
-    st.subheader("🔐 Driver Login")
-    with st.form("driver_login_form"):
-        username = st.text_input("Phone Number")
-        password = st.text_input("Password", type="password")
-        login_submit = st.form_submit_button("Login")
-
-    if login_submit:
-        driver_id = authenticate_driver(username.strip(), password)
-        if driver_id:
-            st.session_state.leave_logged_in = True
-            st.session_state.leave_driver_id = driver_id
-            st.session_state.leave_username = username.strip()
-            st.success("Login successful.")
-            st.rerun()
-        else:
-            st.error("Invalid username or password.")
+    _render_driver_dashboard(driver_id)
 
 
-def _render_driver_dashboard():
+def _render_driver_dashboard(driver_id):
     today = date.today()
-    driver_id = st.session_state.leave_driver_id
-    username = st.session_state.leave_username
     profile = get_driver_profile(driver_id)
 
     top_col1, top_col2 = st.columns([4, 1])
@@ -59,13 +28,9 @@ def _render_driver_dashboard():
                 f"Logged in as `{profile['name']}` ({driver_id}) • Phone: `{profile['phone_number']}` • Joined: `{profile['date_of_joining']}`"
             )
         else:
-            st.caption(f"Logged in as `{username}` ({driver_id})")
+            st.caption(f"Logged in as `{driver_id}`")
     with top_col2:
-        if st.button("Logout"):
-            st.session_state.leave_logged_in = False
-            st.session_state.leave_driver_id = None
-            st.session_state.leave_username = None
-            st.rerun()
+        st.caption("Use sidebar logout")
 
     summary = get_driver_leave_summary(driver_id, today.year, today.month)
 
