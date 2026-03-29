@@ -5,6 +5,7 @@ from owner_dashboard import owner_dashboard_page
 from driver_dashboard import driver_dashboard_page
 from driver_leave_portal import driver_leave_portal_page
 from driver_onboarding import driver_onboarding_page
+from admin_leave_dashboard import admin_leave_dashboard_page
 from database import init_db, authenticate_super_user, authenticate_driver, get_driver_profile
 
 st.set_page_config(page_title="Vayo Dashboard", layout="wide")
@@ -71,6 +72,7 @@ if st.session_state.auth_role == "admin":
         "💰 Driver Payout",
         "📊 Business Dashboard",
         "👨‍✈️ Driver Analytics",
+        "📋 Driver Leave Dashboard",
         "🆕 Driver Onboarding",
     ]
     role_label = "Super User"
@@ -113,6 +115,8 @@ elif page == "📊 Business Dashboard":
     owner_dashboard_page()
 elif page == "👨‍✈️ Driver Analytics":
     driver_dashboard_page()
+elif page == "📋 Driver Leave Dashboard":
+    admin_leave_dashboard_page()
 elif page == "🆕 Driver Onboarding":
     driver_onboarding_page()
 else:
