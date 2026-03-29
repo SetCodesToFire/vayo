@@ -1,23 +1,50 @@
 """Shared Vayo Cab Service branding (logo + titles)."""
+import os
 from pathlib import Path
 from typing import Optional
 
 import streamlit as st
 
 _ROOT = Path(__file__).resolve().parent
-LOGO_PATH = _ROOT / "logo.png"
+
+
+def _logo_candidates():
+    cwd = Path(os.getcwd()).resolve()
+    env_pwd = Path(os.environ.get("PWD", "")).resolve() if os.environ.get("PWD") else None
+    candidates = [
+        _ROOT / "logo.png",
+        cwd / "logo.png",
+        cwd / "assets" / "logo.png",
+        _ROOT.parent / "logo.png",
+    ]
+    if env_pwd:
+        candidates.extend([
+            env_pwd / "logo.png",
+            env_pwd / "assets" / "logo.png",
+        ])
+    # Keep order, remove duplicates
+    seen = set()
+    unique = []
+    for c in candidates:
+        key = str(c)
+        if key not in seen:
+            seen.add(key)
+            unique.append(c)
+    return unique
 
 
 def logo_path() -> Optional[str]:
-    p = LOGO_PATH
-    return str(p) if p.is_file() else None
+    for p in _logo_candidates():
+        if p.is_file():
+            return str(p)
+    return None
 
 
 def render_sidebar_logo() -> None:
     path = logo_path()
     if path:
         st.image(path, width=120)
-        st.caption("Vayo Cab Service")
+    st.caption("Vayo Cab Service")
     st.markdown("---")
 
 
