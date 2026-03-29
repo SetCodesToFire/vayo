@@ -4,6 +4,7 @@ from driver_payout import driver_payout_page
 from owner_dashboard import owner_dashboard_page
 from driver_dashboard import driver_dashboard_page
 from driver_leave_portal import driver_leave_portal_page
+from driver_onboarding import driver_onboarding_page
 from database import init_db
 
 st.set_page_config(page_title="Vayo Dashboard", layout="wide")
@@ -14,24 +15,26 @@ init_db()
 st.title("🚖 Vayo Cab Management System")
 
 # -------------------------------
-# TOP NAVIGATION
+# SIDEBAR NAVIGATION
 # -------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    "💰 Driver Payout",
-    "📊 Business Dashboard",
-    "👨‍✈️ Driver Analytics",
-    "🗓️ Driver Leave Portal",
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "💰 Driver Payout",
+        "📊 Business Dashboard",
+        "👨‍✈️ Driver Analytics",
+        "🆕 Driver Onboarding",
+        "🗓️ Driver Leave Portal",
+    ],
+)
 
-])
-
-with tab1:
+if page == "💰 Driver Payout":
     driver_payout_page()
-
-with tab2:
+elif page == "📊 Business Dashboard":
     owner_dashboard_page()
-
-with tab3:
+elif page == "👨‍✈️ Driver Analytics":
     driver_dashboard_page()
-
-with tab4:
+elif page == "🆕 Driver Onboarding":
+    driver_onboarding_page()
+else:
     driver_leave_portal_page()
