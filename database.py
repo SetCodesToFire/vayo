@@ -1,3 +1,4 @@
+import os
 import psycopg2
 import pandas as pd
 from datetime import date as date_cls
@@ -15,6 +16,10 @@ DB_CONFIG = {
 }
 
 MONTHLY_LEAVE_LIMIT = 4
+
+
+def _hash_password(password):
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 # -------------------------------
@@ -84,6 +89,27 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS super_users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("SELECT COUNT(*) FROM super_users")
+    super_count = cursor.fetchone()[0] or 0
+    if super_count == 0:
+        default_password = os.environ.get("VAYO_SUPER_USER_PASSWORD", "VayoSuperAdmin")
+        cursor.execute(
+            """
+            INSERT INTO super_users (username, password_hash)
+            VALUES (%s, %s)
+            ON CONFLICT (username) DO NOTHING
+            """,
+            ("admin", _hash_password(default_password)),
+        )
 
     conn.commit()
     conn.close()
@@ -163,8 +189,22 @@ def get_dataframe():
     return df
 
 
-def _hash_password(password):
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+def authenticate_super_user(username, password):
+    if not username or not password:
+        return False
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT 1
+        FROM super_users
+        WHERE username = %s AND password_hash = %s
+        """,
+        (username.strip(), _hash_password(password)),
+    )
+    ok = cursor.fetchone() is not None
+    conn.close()
+    return ok
 
 
 def _generate_driver_id(cursor):
