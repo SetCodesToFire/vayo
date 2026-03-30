@@ -54,7 +54,6 @@ def render_app_header(subtitle: str = "Management System") -> None:
 def render_page_header(title: str) -> None:
     c1, c2 = st.columns([1, 8])
     with c1:
-        if path:
-            st.markdown(f"")
+        st.markdown(f"")
     with c2:
         st.markdown(f"## {title}")
