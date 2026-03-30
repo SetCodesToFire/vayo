@@ -38,28 +38,19 @@ def owner_dashboard_page():
         return
 
     # -------------------------------
-    # INPUTS
-    # -------------------------------
-    col1, col2 = st.columns(2)
-
-    with col1:
-        subscription = st.number_input("Subscription Cost", value=0)
-
-    with col2:
-        cng_extra = st.number_input("Extra CNG Adjustment", value=0)
-
-    # -------------------------------
     # CALCULATIONS
     # -------------------------------
     # Gross Uber = sum of gross trip fare (not driver 30% share stored in driver_gross)
     gross_uber = day_df[fare_col].sum()
     net_col = _col("net_payout")
     cng_col = _col("cng")
+    subscription_col = _col("subscription")
     if not net_col or not cng_col:
         st.error("Payout data is missing `net_payout` or `cng`.")
         return
     driver_payout = day_df[net_col].sum()
-    cng = day_df[cng_col].sum() + cng_extra
+    cng = day_df[cng_col].sum()
+    subscription = day_df[subscription_col].sum()
 
     owner_earning = gross_uber - driver_payout - subscription - cng
     owner_percent = (owner_earning / gross_uber * 100) if gross_uber else 0
@@ -67,11 +58,13 @@ def owner_dashboard_page():
     # -------------------------------
     # DISPLAY
     # -------------------------------
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric("Gross Uber Earnings", f"₹{gross_uber:,.0f}")
     col2.metric("Driver Payout", f"₹{driver_payout:,.0f}")
-    col3.metric("Owner Earnings", f"₹{owner_earning:,.0f}")
+    col3.metric("Subscription Cost", f"₹{subscription:,.0f}")
+    col4.metric("CNG Cost", f"₹{cng:,.0f}")
+    col5.metric("Owner Earnings", f"₹{owner_earning:,.0f}")
 
     st.metric("Owner %", f"{owner_percent:.2f}%")
 
