@@ -74,14 +74,14 @@ def owner_dashboard_page():
     st.subheader("📅 Date-wise Summary")
 
     agg = {fare_col: "sum"}
-    if net_col:
-        agg[net_col] = "sum"
+    if driver_gross_col:
+        agg[driver_gross_col] = "sum"
     if cng_col:
         agg[cng_col] = "sum"
     summary = df.groupby(df["date"].dt.date).agg(agg).reset_index()
     rename_map = {fare_col: "gross_fare"}
-    if net_col:
-        rename_map[net_col] = "net_payout"
+    if driver_gross_col:
+        rename_map[driver_gross_col] = "driver_gross"
     if cng_col:
         rename_map[cng_col] = "cng"
     summary = summary.rename(columns=rename_map)
