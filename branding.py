@@ -40,14 +40,6 @@ def logo_path() -> Optional[str]:
     return None
 
 
-def render_sidebar_logo() -> None:
-    path = logo_path()
-    if path:
-        st.image(path, width=120)
-    st.caption("Vayo Cab Service")
-    st.markdown("---")
-
-
 def render_app_header(subtitle: str = "Management System") -> None:
     path = logo_path()
     c1, c2 = st.columns([1, 6])
@@ -60,10 +52,6 @@ def render_app_header(subtitle: str = "Management System") -> None:
 
 
 def render_page_header(title: str) -> None:
-    path = logo_path()
-    c1, c2 = st.columns([1, 8])
+    c1 = st.columns([8])
     with c1:
-        if path:
-            st.image(path, width=56)
-    with c2:
         st.markdown(f"## {title}")
