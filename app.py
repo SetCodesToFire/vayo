@@ -29,8 +29,6 @@ branding.render_app_header("Management System")
 # SINGLE LOGIN GATE
 # -------------------------------
 if not st.session_state.auth_logged_in:
-    with st.sidebar:
-        branding.render_sidebar_logo()
     if st.session_state.show_signup:
         st.subheader("🆕 Driver Signup")
         driver_onboarding_page()
@@ -84,7 +82,6 @@ else:
     role_label = "Driver"
 
 with st.sidebar:
-    branding.render_sidebar_logo()
     st.success(f"Logged in as {role_label}")
     if st.session_state.auth_role == "driver":
         profile = get_driver_profile(st.session_state.auth_driver_id)
