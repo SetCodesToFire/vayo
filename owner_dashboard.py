@@ -42,13 +42,13 @@ def owner_dashboard_page():
     # -------------------------------
     # Gross Uber = sum of gross trip fare (not driver 30% share stored in driver_gross)
     gross_uber = day_df[fare_col].sum()
-    net_col = _col("net_payout")
+    driver_gross_col = _col("driver_gross")
     cng_col = _col("cng")
     subscription_col = _col("subscription")
-    if not net_col or not cng_col:
-        st.error("Payout data is missing `net_payout` or `cng`.")
+    if not driver_gross_col or not cng_col:
+        st.error("Payout data is missing `driver gross` or `cng`.")
         return
-    driver_payout = day_df[net_col].sum()
+    driver_payout = day_df[driver_gross_col].sum()
     cng = day_df[cng_col].sum()
     subscription = day_df[subscription_col].sum()
 
