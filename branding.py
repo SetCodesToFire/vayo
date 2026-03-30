@@ -55,6 +55,6 @@ def render_page_header(title: str) -> None:
     c1, c2 = st.columns([1, 8])
     with c1:
         if path:
-            st.image(path, width=56)
+            st.markdown(f"")
     with c2:
         st.markdown(f"## {title}")
