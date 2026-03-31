@@ -6,6 +6,11 @@ from driver_dashboard import driver_dashboard_page
 from driver_leave_portal import driver_leave_portal_page
 from driver_onboarding import driver_onboarding_page
 from admin_leave_dashboard import admin_leave_dashboard_page
+from vehicle_onboarding import vehicle_onboarding_page
+from driver_vehicle_assignment import driver_vehicle_assignment_page
+from driver_earnings_dashboard import driver_earnings_dashboard_page
+from vehicle_compliance_dashboard import vehicle_compliance_dashboard_page
+from leave_approvals import leave_approvals_page
 from database import init_db, authenticate_super_user, authenticate_driver, get_driver_profile
 import branding
 
@@ -74,11 +79,15 @@ if st.session_state.auth_role == "admin":
         "📊 Business Dashboard",
         "👨‍✈️ Driver Analytics",
         "📋 Driver Leave Dashboard",
+        "📩 Leave Approvals",
+        "🚚 Vehicle Onboarding",
+        "🧑‍🤝‍🧑 Attach Drivers to Vehicle",
+        "🚚 Vehicle Compliance",
         "🆕 Driver Onboarding",
     ]
     role_label = "Super User"
 else:
-    nav_options = ["🗓️ Driver Leave Portal"]
+    nav_options = ["🗓️ Driver Leave Portal", "📈 Driver Earnings"]
     role_label = "Driver"
 
 with st.sidebar:
@@ -103,7 +112,7 @@ with st.sidebar:
 # -------------------------------
 # ACCESS CONTROL (defense in depth)
 # -------------------------------
-if st.session_state.auth_role != "admin" and page != "🗓️ Driver Leave Portal":
+if st.session_state.auth_role != "admin" and page not in ["🗓️ Driver Leave Portal", "📈 Driver Earnings"]:
     st.error("Access denied.")
     st.stop()
 
@@ -118,7 +127,18 @@ elif page == "👨‍✈️ Driver Analytics":
     driver_dashboard_page()
 elif page == "📋 Driver Leave Dashboard":
     admin_leave_dashboard_page()
+elif page == "🚚 Vehicle Onboarding":
+    vehicle_onboarding_page()
+elif page == "🧑‍🤝‍🧑 Attach Drivers to Vehicle":
+    driver_vehicle_assignment_page()
+elif page == "🚚 Vehicle Compliance":
+    vehicle_compliance_dashboard_page()
 elif page == "🆕 Driver Onboarding":
     driver_onboarding_page()
+elif page == "📩 Leave Approvals":
+    leave_approvals_page()
 else:
-    driver_leave_portal_page(driver_id=st.session_state.auth_driver_id)
+    if page == "📈 Driver Earnings":
+        driver_earnings_dashboard_page(st.session_state.auth_driver_id)
+    else:
+        driver_leave_portal_page(driver_id=st.session_state.auth_driver_id)
