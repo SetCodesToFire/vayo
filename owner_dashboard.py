@@ -86,4 +86,43 @@ def owner_dashboard_page():
         rename_map[cng_col] = "cng"
     summary = summary.rename(columns=rename_map)
 
+    # Profit = gross fare - driver payout - subscription - cng
+    if all(col in summary.columns for col in ["gross_fare", "driver_payout", "subscription", "cng"]):
+        summary["profit"] = (
+            summary["gross_fare"] - summary["driver_payout"] - summary["subscription"] - summary["cng"]
+        )
+
     st.dataframe(summary)
+
+    st.subheader("📈 Monthly Profit (From Saved Data)")
+    colm1, colm2 = st.columns(2)
+    with colm1:
+        selected_year = st.number_input(
+            "Year",
+            min_value=2026,
+            max_value=2100,
+            value=int(pd.Timestamp.today().year),
+        )
+    with colm2:
+        selected_month = st.number_input("Month", min_value=1, max_value=12, value=int(pd.Timestamp.today().month))
+
+    # Use actual saved payout data for the month
+    if selected_month:
+        month_start = pd.Timestamp(int(selected_year), int(selected_month), 1).date()
+        month_end = (pd.Timestamp(int(selected_year), int(selected_month), 1) + pd.offsets.MonthEnd(0)).date()
+        month_df = df[(df["date"].dt.date >= month_start) & (df["date"].dt.date <= month_end)]
+
+        if month_df.empty:
+            st.info("No data for selected month.")
+        else:
+            gross_m = month_df[fare_col].sum()
+            driver_payout_m = month_df[driver_gross_col].sum()
+            subscription_m = month_df[subscription_col].sum()
+            cng_m = month_df[cng_col].sum()
+            profit_m = gross_m - driver_payout_m - subscription_m - cng_m
+            owner_percent_m = (profit_m / gross_m * 100) if gross_m else 0
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Gross Uber", f"₹{gross_m:,.0f}")
+            c2.metric("Profit", f"₹{profit_m:,.0f}")
+            c3.metric("Owner %", f"{owner_percent_m:.2f}%")
