@@ -66,3 +66,11 @@ def _render_driver_dashboard(driver_id):
         st.info("No leave records found.")
     else:
         st.dataframe(history_df, use_container_width=True)
+
+        if "leave_status" in history_df.columns:
+            pending_df = history_df[history_df["leave_status"] == "Pending"]
+            st.subheader("⏳ Pending Leaves")
+            if pending_df.empty:
+                st.success("No pending leaves.")
+            else:
+                st.dataframe(pending_df, use_container_width=True)
