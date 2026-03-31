@@ -54,7 +54,7 @@ def driver_dashboard_page():
     # -------------------------------
     # SUMMARY
     # -------------------------------
-    total_earning = filtered_df['net_payout'].sum()
+    total_earning = filtered_df['driver_gross'].sum()
     total_trips = len(filtered_df)
     total_drivers = filtered_df['driver'].nunique()
 
@@ -70,8 +70,7 @@ def driver_dashboard_page():
 
     driver_summary = filtered_df.groupby('driver').agg({
         'driver_gross': 'sum',
-        'net_payout': 'sum'
-    }).reset_index().sort_values('net_payout', ascending=False)
+    }).reset_index()
 
     st.dataframe(driver_summary)
 
@@ -82,9 +81,8 @@ def driver_dashboard_page():
 
     daily = filtered_df.groupby(filtered_df['date'].dt.date).agg({
         'driver_gross': 'sum',
-        'net_payout': 'sum'
     }).reset_index()
 
     st.dataframe(daily)
 
-    st.bar_chart(daily.set_index('date')['net_payout'])
+    st.bar_chart(daily.set_index('date')['driver_gross'])
